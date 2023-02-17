@@ -5,7 +5,7 @@ import panel
 import ezmsg.core as ez
 import numpy as np
 
-from ezmsg.util.messages import AxisArray, DimensionalAxis
+from ezmsg.util.messages.axisarray import AxisArray
 
 from ezmsg.sigproc.butterworthfilter import (
     ButterworthFilter, 
@@ -172,9 +172,8 @@ class TimeSeriesPlotGUI( ez.Unit ):
         axis_name = self.SETTINGS.time_axis
         if axis_name is None:
             axis_name = msg.dims[0]
-        axis = msg.axes[axis_name]
-
-        fs = 1.0 / axis.gain if isinstance(axis, DimensionalAxis) else 1.0
+        axis = msg.get_axis(axis_name)
+        fs = 1.0 / axis.gain
 
         with msg.view2d(axis_name) as view:
             
