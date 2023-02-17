@@ -1,12 +1,9 @@
 from dataclasses import dataclass, field
-import logging
 
 import panel
 import ezmsg.core as ez
 
 from typing import TYPE_CHECKING, Mapping, Union, Callable, Optional, Dict, Any
-
-logger = logging.getLogger( __name__ )
 
 if TYPE_CHECKING:
     from panel.template.base import BaseTemplate
@@ -41,6 +38,6 @@ class Application( ez.Unit ):
                     **self.SETTINGS.serve_kwargs
                 )
             else:
-                logger.warn( "Panel application has no panels set. " + \
+                ez.logger.warning( "Panel application has no panels set. " + \
                     "Did you forget to configure the panels attribute?"
                 )
