@@ -65,7 +65,8 @@ class LinePlot( ez.Unit ):
             title = self.SETTINGS.name, 
             output_backend = "webgl",
             x_axis_type = x_axis_type,
-            y_axis_type = y_axis_type
+            y_axis_type = y_axis_type,
+            tooltips=[("x", "$x"), ("y", "$y")]
         )
 
         lines = dict()

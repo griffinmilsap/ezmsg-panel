@@ -19,7 +19,6 @@ from typing import AsyncGenerator, List
 from .scrollinglineplot import (
     ScrollingLinePlot, 
     ScrollingLinePlotSettings, 
-    ScrollingLinePlotSettingsMessage
 )
 
 
@@ -88,7 +87,6 @@ class ButterworthFilterControl(ez.Unit):
         ]
 
 
-TimeSeriesPlotSettingsMessage = ScrollingLinePlotSettingsMessage
 TimeSeriesPlotSettings = ScrollingLinePlotSettings
 
 class TimeSeriesPlot(ez.Collection):

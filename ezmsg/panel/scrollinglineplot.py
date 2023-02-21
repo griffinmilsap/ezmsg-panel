@@ -75,7 +75,8 @@ class ScrollingLinePlot( ez.Unit ):
         fig = figure( 
             sizing_mode = 'stretch_width', 
             title = self.SETTINGS.name, 
-            output_backend = "webgl" 
+            output_backend = "webgl", 
+            tooltips=[("x", "$x"), ("y", "$y")]
         )
 
         lines = {}
