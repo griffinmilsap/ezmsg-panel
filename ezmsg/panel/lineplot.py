@@ -12,6 +12,8 @@ from bokeh.plotting import figure, Figure
 from bokeh.models import ColumnDataSource
 from bokeh.models.renderers import GlyphRenderer
 
+from .util import AxisScale
+
 from typing import Dict, Optional, List
 
 CDS_X_DIM = '__x__'
@@ -20,6 +22,8 @@ CDS_X_DIM = '__x__'
 class LinePlotSettingsMessage:
     name: str = 'LinePlot'
     x_axis: Optional[str] = None # If not specified, dim 0 is used.
+    x_axis_scale: AxisScale = AxisScale.LINEAR
+    y_axis_scale: AxisScale = AxisScale.LINEAR
 
 class LinePlotSettings(ez.Settings, LinePlotSettingsMessage):
     ...
@@ -49,10 +53,19 @@ class LinePlot( ez.Unit ):
     def plot( self ) -> panel.viewable.Viewable:
         cds = ColumnDataSource()
 
+        x_axis_type, y_axis_type = 'linear', 'linear'
+
+        if self.SETTINGS.x_axis_scale == AxisScale.LOG:
+            x_axis_type = 'log'
+        if self.SETTINGS.y_axis_scale == AxisScale.LOG:
+            y_axis_type = 'log'
+
         fig = figure( 
             sizing_mode = 'stretch_width', 
             title = self.SETTINGS.name, 
-            output_backend = "webgl" 
+            output_backend = "webgl",
+            x_axis_type = x_axis_type,
+            y_axis_type = y_axis_type
         )
 
         lines = dict()

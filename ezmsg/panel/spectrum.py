@@ -21,6 +21,7 @@ from ezmsg.sigproc.window import Window, WindowSettingsMessage
 from param.parameterized import Event
 
 from .lineplot import LinePlot, LinePlotSettings
+from .util import AxisScale
 
 @dataclass
 class SpectrumControlSettingsMessage:
@@ -144,6 +145,7 @@ class SpectrumPlotSettingsMessage:
     name: str = 'Spectral Plot'
     time_axis: Optional[str] = None # If none, use dim 0
     freq_axis: Optional[str] = 'freq' # If none; use same dim name for freq output
+    freq_axis_scale: AxisScale = AxisScale.LOG
     window_dur: float = 1.0 # sec
     window_shift: float = 0.5 # sec
 
@@ -166,7 +168,8 @@ class SpectrumPlot( ez.Collection ):
         self.PLOT.apply_settings( 
             LinePlotSettings(
                 name = self.SETTINGS.name,
-                x_axis = self.SETTINGS.freq_axis
+                x_axis = self.SETTINGS.freq_axis,
+                x_axis_scale = AxisScale.LOG
             ) 
         )
 
