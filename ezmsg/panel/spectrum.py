@@ -1,0 +1,213 @@
+import asyncio
+from dataclasses import dataclass, field, replace
+
+import panel
+import ezmsg.core as ez
+
+from ezmsg.util.messages.axisarray import AxisArray
+
+from typing import AsyncGenerator, Optional, List
+
+from ezmsg.sigproc.spectral import (
+    Spectrum, 
+    SpectrumSettingsMessage,
+    SpectralTransform,
+    SpectralOutput,
+    WindowFunction
+)
+
+from ezmsg.sigproc.window import Window, WindowSettingsMessage
+
+from param.parameterized import Event
+
+from .lineplot import LinePlot, LinePlotSettings
+
+@dataclass
+class SpectrumControlSettingsMessage:
+    spectrum_settings: SpectrumSettingsMessage = field(
+        default_factory = SpectrumSettingsMessage
+    )
+
+    window_settings: WindowSettingsMessage = field(
+        default_factory = WindowSettingsMessage
+    )
+
+class SpectrumControlSettings(ez.Settings, SpectrumControlSettingsMessage):
+    ...
+
+class SpectrumControlState(ez.State):
+    spectrum_queue: "asyncio.Queue[SpectrumSettingsMessage]"
+    window_queue: "asyncio.Queue[WindowSettingsMessage]"
+
+    # Controls for Spectrum
+    window: panel.widgets.Select
+    transform: panel.widgets.Select
+    output: panel.widgets.Select
+
+    # Controls for Window
+    window_dur: panel.widgets.FloatInput
+    window_shift: panel.widgets.FloatInput
+
+class SpectrumControl(ez.Unit):
+    SETTINGS: SpectrumControlSettings
+    STATE: SpectrumControlState
+
+    OUTPUT_SPECTRUM_SETTINGS = ez.OutputStream(SpectrumSettingsMessage)
+    OUTPUT_WINDOW_SETTINGS = ez.OutputStream(WindowSettingsMessage)
+
+    def initialize(self) -> None:
+        self.STATE.spectrum_queue = asyncio.Queue()
+        self.STATE.window_queue = asyncio.Queue()
+
+        # Spectrum Settings
+        self.STATE.window = panel.widgets.Select(
+            name = "Window Function", 
+            options = WindowFunction.options(), 
+            value = self.SETTINGS.spectrum_settings.window.value
+        )
+
+        self.STATE.transform = panel.widgets.Select(
+            name = "Spectral Transform",
+            options = SpectralTransform.options(),
+            disabled_options = [SpectralTransform.RAW_COMPLEX.value],
+            value = self.SETTINGS.spectrum_settings.transform.value
+        )
+
+        self.STATE.output = panel.widgets.Select(
+            name = "Spectral Output",
+            options = SpectralOutput.options(),
+            value = self.SETTINGS.spectrum_settings.output.value
+        )
+
+        def queue_spectrum_settings(*events: Event) -> None:
+            self.STATE.spectrum_queue.put_nowait( replace(
+                self.SETTINGS.spectrum_settings,
+                window = WindowFunction(self.STATE.window.value),
+                transform = SpectralTransform(self.STATE.transform.value),
+                output = SpectralOutput(self.STATE.output.value)
+            ) )
+            
+        self.STATE.window.param.watch(queue_spectrum_settings, 'value')
+        self.STATE.transform.param.watch(queue_spectrum_settings, 'value')
+        self.STATE.output.param.watch(queue_spectrum_settings, 'value')
+
+        # Window Settings
+        self.STATE.window_dur = panel.widgets.FloatInput(
+            name = 'Window Duration (sec)', 
+            value = self.SETTINGS.window_settings.window_dur,
+            step = 1e-1,
+            start = 0.0
+        )
+
+        self.STATE.window_shift = panel.widgets.FloatInput(
+            name = 'Window Shift (sec)',
+            value = self.SETTINGS.window_settings.window_shift,
+            step = 1e-1,
+            start = 0.0
+        )
+
+        def queue_window_settings(*events: Event) -> None:
+            self.STATE.window_queue.put_nowait( replace(
+                self.SETTINGS.window_settings,
+                window_dur = self.STATE.window_dur.value,
+                window_shift = self.STATE.window_shift.value
+            ) )
+
+        self.STATE.window_dur.param.watch(queue_window_settings, 'value')
+        self.STATE.window_shift.param.watch(queue_window_settings, 'value')
+
+    @ez.publisher(OUTPUT_SPECTRUM_SETTINGS)
+    async def pub_spectrum_settings(self) -> AsyncGenerator:
+        while True:
+            settings = await self.STATE.spectrum_queue.get()
+            yield self.OUTPUT_SPECTRUM_SETTINGS, settings
+
+    @ez.publisher(OUTPUT_WINDOW_SETTINGS)
+    async def pub_window_settings(self) -> AsyncGenerator:
+        while True:
+            settings = await self.STATE.window_queue.get()
+            yield self.OUTPUT_WINDOW_SETTINGS, settings
+
+    @property
+    def controls(self) -> List[panel.viewable.Viewable]:
+        return [
+            self.STATE.window,
+            self.STATE.transform,
+            self.STATE.output,
+            self.STATE.window_dur,
+            self.STATE.window_shift
+        ]
+
+
+@dataclass
+class SpectrumPlotSettingsMessage:
+    name: str = 'Spectral Plot'
+    time_axis: Optional[str] = None # If none, use dim 0
+    freq_axis: Optional[str] = 'freq' # If none; use same dim name for freq output
+    window_dur: float = 1.0 # sec
+    window_shift: float = 0.5 # sec
+
+
+class SpectrumPlotSettings(ez.Settings, SpectrumPlotSettingsMessage):
+    ...
+
+
+class SpectrumPlot( ez.Collection ):
+    SETTINGS: SpectrumPlotSettings
+
+    INPUT_SIGNAL = ez.InputStream(AxisArray)
+
+    SPECTRUM_CONTROL = SpectrumControl()
+    WINDOW = Window()
+    SPECTRUM = Spectrum()
+    PLOT = LinePlot()
+
+    def configure( self ) -> None:
+        self.PLOT.apply_settings( 
+            LinePlotSettings(
+                name = self.SETTINGS.name,
+                x_axis = self.SETTINGS.freq_axis
+            ) 
+        )
+
+        spectrum_settings = SpectrumSettingsMessage(
+            axis = self.SETTINGS.time_axis,
+            out_axis = self.SETTINGS.freq_axis
+        )
+
+        self.SPECTRUM.apply_settings(spectrum_settings)
+
+        window_settings = WindowSettingsMessage(
+            axis = self.SETTINGS.time_axis,
+            window_dur = self.SETTINGS.window_dur,
+            window_shift = self.SETTINGS.window_shift
+        )
+
+        self.WINDOW.apply_settings(window_settings)
+
+        self.SPECTRUM_CONTROL.apply_settings(
+            SpectrumControlSettings(
+                spectrum_settings = spectrum_settings,
+                window_settings = window_settings       
+            )
+        )
+
+    def panel(self) -> panel.viewable.Viewable:
+        return panel.Row(
+            self.PLOT.plot(),
+            panel.Column(
+                "__Line Plot Controls__",
+                *self.PLOT.controls,
+                '__Spectrum Settings__',
+                *self.SPECTRUM_CONTROL.controls
+            )
+        )
+
+    def network( self ) -> ez.NetworkDefinition:
+        return (
+            (self.SPECTRUM_CONTROL.OUTPUT_SPECTRUM_SETTINGS, self.SPECTRUM.INPUT_SETTINGS),
+            (self.SPECTRUM_CONTROL.OUTPUT_WINDOW_SETTINGS, self.WINDOW.INPUT_SETTINGS),
+            (self.INPUT_SIGNAL, self.WINDOW.INPUT_SIGNAL),
+            (self.WINDOW.OUTPUT_SIGNAL, self.SPECTRUM.INPUT_SIGNAL),
+            (self.SPECTRUM.OUTPUT_SIGNAL, self.PLOT.INPUT_SIGNAL)
+        )

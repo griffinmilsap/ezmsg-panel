@@ -9,7 +9,8 @@ from ezmsg.util.messages.axisarray import AxisArray
 
 from ezmsg.sigproc.butterworthfilter import (
     ButterworthFilter, 
-    ButterworthFilterDesign
+    ButterworthFilterSettingsMessage,
+    ButterworthFilterSettings
 )
 
 from bokeh.plotting import figure, Figure
@@ -52,7 +53,7 @@ class TimeSeriesPlotGUI( ez.Unit ):
     STATE: TimeSeriesPlotGUIState
 
     INPUT_SIGNAL = ez.InputStream(AxisArray)
-    OUTPUT_FILTER = ez.OutputStream(ButterworthFilterDesign)
+    OUTPUT_FILTER = ez.OutputStream(ButterworthFilterSettingsMessage)
 
     def initialize( self ) -> None:
         self.STATE.queues = set()
@@ -67,7 +68,8 @@ class TimeSeriesPlotGUI( ez.Unit ):
 
         def enqueue_design( _ ):
             self.STATE.design_queue.put_nowait(
-                ButterworthFilterDesign(
+                ButterworthFilterSettingsMessage(
+                    axis = self.SETTINGS.time_axis,
                     order = self.STATE.order.value,
                     cuton = self.STATE.cuton.value,
                     cutoff = self.STATE.cutoff.value
@@ -205,6 +207,11 @@ class TimeSeriesPlot( ez.Collection ):
 
     def configure( self ) -> None:
         self.GUI.apply_settings( self.SETTINGS )
+        self.BPFILT.apply_settings(
+            ButterworthFilterSettings(
+                axis = self.SETTINGS.time_axis
+            )
+        )
 
     def network( self ) -> ez.NetworkDefinition:
         return (
