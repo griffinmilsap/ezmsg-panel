@@ -4,6 +4,7 @@ import ezmsg.core as ez
 
 from ezmsg.panel.application import Application, ApplicationSettings
 from ezmsg.panel.spectrum import SpectrumPlot, SpectrumPlotSettings
+from ezmsg.panel.timeseriesplot import TimeSeriesPlot, TimeSeriesPlotSettings
 from ezmsg.sigproc.synth import EEGSynth, EEGSynthSettings
 
 @dataclass
@@ -25,27 +26,37 @@ class EEGSpectrum(ez.Collection):
 
     APP = Application()
     EEG = EEGSynth()
-    SPECT = SpectrumPlot()
+    TIMESERIES_PLOT = TimeSeriesPlot()
+    SPECTRUM_PLOT = SpectrumPlot()
 
     def configure(self) -> None:
 
         self.APP.apply_settings(self.SETTINGS.app_settings)
         self.EEG.apply_settings(self.SETTINGS.eeg_settings)
 
-        self.SPECT.apply_settings(
+        self.SPECTRUM_PLOT.apply_settings(
             SpectrumPlotSettings(
                 name = 'EEG Spectrum',
                 time_axis = 'time'
             )
         )
 
+        self.TIMESERIES_PLOT.apply_settings(
+            TimeSeriesPlotSettings(
+                name = "EEG Timeseries",
+                time_axis = 'time'
+            )
+        )
+
         self.APP.panels = {
-            'spectrum': self.SPECT.panel
+            'Timeseries': self.TIMESERIES_PLOT.panel,
+            'Spectra': self.SPECTRUM_PLOT.panel
         }
 
     def network(self) -> ez.NetworkDefinition:
         return (
-            (self.EEG.OUTPUT_SIGNAL, self.SPECT.INPUT_SIGNAL),
+            (self.EEG.OUTPUT_SIGNAL, self.SPECTRUM_PLOT.INPUT_SIGNAL),
+            (self.EEG.OUTPUT_SIGNAL, self.TIMESERIES_PLOT.INPUT_SIGNAL)
         )
 
 if __name__ == '__main__':
