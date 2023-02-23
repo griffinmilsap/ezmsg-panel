@@ -23,7 +23,7 @@ from param.parameterized import Event
 from .lineplot import LinePlot, LinePlotSettings
 from .util import AxisScale
 
-@dataclass
+@dataclass(frozen = True)
 class SpectrumControlSettingsMessage:
     spectrum_settings: SpectrumSettingsMessage = field(
         default_factory = SpectrumSettingsMessage
@@ -140,7 +140,7 @@ class SpectrumControl(ez.Unit):
         ]
 
 
-@dataclass
+@dataclass(frozen = True)
 class SpectrumPlotSettingsMessage:
     name: str = 'Spectral Plot'
     time_axis: Optional[str] = None # If none, use dim 0

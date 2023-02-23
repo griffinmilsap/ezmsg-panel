@@ -17,7 +17,7 @@ from typing import Dict, Set, Optional, List
 
 CDS_TIME_DIM = '__time__'
 
-@dataclass
+@dataclass(frozen = True)
 class ScrollingLinePlotSettingsMessage:
     name: str = 'Scrolling Line Plot'
     time_axis: Optional[str] = None # If not specified, dim 0 is used.

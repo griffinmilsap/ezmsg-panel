@@ -13,7 +13,7 @@ from ezmsg.util.messagelogger import MessageLogger
 
 from typing import AsyncGenerator, Any, List, Tuple, Optional
 
-@dataclass
+@dataclass(frozen = True)
 class RecorderSettingsMessage:
     data_dir: Path
     name: str = 'Message Recorder'

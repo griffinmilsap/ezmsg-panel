@@ -7,7 +7,7 @@ from ezmsg.panel.spectrum import SpectrumPlot, SpectrumPlotSettings
 from ezmsg.panel.timeseriesplot import TimeSeriesPlot, TimeSeriesPlotSettings
 from ezmsg.sigproc.synth import EEGSynth, EEGSynthSettings
 
-@dataclass
+@dataclass(frozen = True)
 class EEGSpectrumSettingsMessage:
     eeg_settings: EEGSynthSettings = field(
         default_factory = EEGSynthSettings

@@ -11,7 +11,7 @@ from param.parameterized import Event
 
 from typing import AsyncGenerator, Tuple
 
-@dataclass
+@dataclass(frozen = True)
 class NumberPanelSettingsMessage:
     default_value: float = 1.0
 

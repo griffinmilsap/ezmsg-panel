@@ -18,7 +18,7 @@ from typing import Dict, Optional, List
 
 CDS_X_DIM = '__x__'
 
-@dataclass
+@dataclass(frozen = True)
 class LinePlotSettingsMessage:
     name: str = 'LinePlot'
     x_axis: Optional[str] = None # If not specified, dim 0 is used.

@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     TViewable = Union[Viewable, Viewer, BaseTemplate]
     TViewableOrFunc = Union[TViewable, Callable[[], TViewable]]
 
-@dataclass
+@dataclass(frozen = True)
 class ApplicationSettingsMessage:
     port: Optional[ int ] = None # None => disable server, 0 => choose open port
     name: str = 'ezmsg Panel'
