@@ -1,3 +1,5 @@
+import asyncio
+
 from functools import partial
 from dataclasses import dataclass
 
@@ -12,6 +14,8 @@ from bokeh.plotting import figure, Figure
 from bokeh.models import ColumnDataSource
 from bokeh.models.renderers import GlyphRenderer
 
+from param.parameterized import Event
+
 from .util import AxisScale
 
 from typing import Dict, Optional, List
@@ -24,6 +28,8 @@ class LinePlotSettingsMessage:
     x_axis: Optional[str] = None # If not specified, dim 0 is used.
     x_axis_scale: AxisScale = AxisScale.LINEAR
     y_axis_scale: AxisScale = AxisScale.LINEAR
+    y_axis_label: Optional[str] = None
+    x_axis_label: Optional[str] = None
 
 class LinePlotSettings(ez.Settings, LinePlotSettingsMessage):
     ...
@@ -36,19 +42,34 @@ class LinePlotState( ez.State ):
     channelize: panel.widgets.Checkbox
     gain: panel.widgets.FloatInput
 
+    update_ev: asyncio.Event
+    cur_signal: Optional[AxisArray]
+
+
 class LinePlot( ez.Unit ):
 
     SETTINGS: LinePlotSettings
     STATE: LinePlotState
 
-    INPUT_SIGNAL = ez.InputStream(AxisArray)
+    INPUT_SIGNAL = ez.InputStream(Optional[AxisArray])
 
     def initialize( self ) -> None:
         self.STATE.x_data = np.arange(0)
         self.STATE.cds_data = dict()
 
+        self.STATE.update_ev = asyncio.Event()
+        self.STATE.update_ev.clear()
+        self.STATE.cur_signal = None
+
         self.STATE.channelize = panel.widgets.Checkbox(name = 'Channelize', value = True)
         self.STATE.gain = panel.widgets.FloatInput(name = 'Gain', value = 1.0)
+
+        def on_vis_control(*events: Event) -> None:
+            self.STATE.update_ev.set()
+
+        self.STATE.channelize.param.watch(on_vis_control, 'value')
+        self.STATE.gain.param.watch(on_vis_control, 'value')
+
     
     def plot( self ) -> panel.viewable.Viewable:
         cds = ColumnDataSource()
@@ -60,13 +81,20 @@ class LinePlot( ez.Unit ):
         if self.SETTINGS.y_axis_scale == AxisScale.LOG:
             y_axis_type = 'log'
 
+        axis_labels = dict()
+        if self.SETTINGS.x_axis_label is not None:
+            axis_labels['x_axis_label'] = self.SETTINGS.x_axis_label
+        if self.SETTINGS.y_axis_label is not None:
+            axis_labels['y_axis_label'] = self.SETTINGS.y_axis_label
+
         fig = figure( 
             sizing_mode = 'stretch_width', 
             title = self.SETTINGS.name, 
             output_backend = "webgl",
             x_axis_type = x_axis_type,
             y_axis_type = y_axis_type,
-            tooltips=[("x", "$x"), ("y", "$y")]
+            tooltips=[("x", "$x"), ("y", "$y")],
+            **axis_labels
         )
 
         lines = dict()
@@ -119,25 +147,42 @@ class LinePlot( ez.Unit ):
         )
     
     @ez.subscriber(INPUT_SIGNAL)
-    async def on_signal(self, msg: AxisArray) -> None:
-        axis_name = self.SETTINGS.x_axis
-        if axis_name is None:
-            axis_name = msg.dims[0]
-        axis = msg.get_axis(axis_name)
+    async def on_signal(self, msg: Optional[AxisArray]) -> None:
+        self.STATE.cur_signal = msg
+        self.STATE.update_ev.set()
 
-        with msg.view2d(axis_name) as view:
+    @ez.task
+    async def update_data(self) -> None:
 
-            ch_names = getattr(msg, 'ch_names', None)
-            if ch_names is None:
-                ch_names = [f'ch_{i}' for i in range(view.shape[1])]
+        while True:
+            await self.STATE.update_ev.wait()
+            self.STATE.update_ev.clear()
 
-            self.STATE.x_data = (np.arange(view.shape[0]) * axis.gain) + axis.offset
-            vis_view = (view * self.STATE.gain.value)
+            msg = self.STATE.cur_signal
 
-            if self.STATE.channelize.value:
-                vis_view += np.arange(len(ch_names)) 
+            if msg is None: # clear the plot
+                self.STATE.x_data = np.arange(0)
+                self.STATE.cds_data = dict()
+                continue
 
-            self.STATE.cds_data = {
-                ch_name: vis_view[:, ch_idx] 
-                for ch_idx, ch_name in enumerate(ch_names)
-            }
+            axis_name = self.SETTINGS.x_axis
+            if axis_name is None:
+                axis_name = msg.dims[0]
+            axis = msg.get_axis(axis_name)
+
+            with msg.view2d(axis_name) as view:
+
+                ch_names = getattr(msg, 'ch_names', None)
+                if ch_names is None:
+                    ch_names = [f'ch_{i}' for i in range(view.shape[1])]
+
+                self.STATE.x_data = (np.arange(view.shape[0]) * axis.gain) + axis.offset
+                vis_view = (view * self.STATE.gain.value)
+
+                if self.STATE.channelize.value:
+                    vis_view += np.arange(len(ch_names)) 
+
+                self.STATE.cds_data = {
+                    ch_name: vis_view[:, ch_idx] 
+                    for ch_idx, ch_name in enumerate(ch_names)
+                }
