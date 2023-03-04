@@ -1,5 +1,4 @@
 import asyncio
-from dataclasses import dataclass
 
 import ezmsg.core as ez
 
@@ -11,12 +10,8 @@ from param.parameterized import Event
 
 from typing import AsyncGenerator, Tuple
 
-@dataclass(frozen = True)
-class NumberPanelSettingsMessage:
+class NumberPanelSettings(ez.Settings):
     default_value: float = 1.0
-
-class NumberPanelSettings(ez.Settings, NumberPanelSettingsMessage):
-    ...
 
 class NumberPanelState(ez.State):
     number: panel.widgets.FloatInput

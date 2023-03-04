@@ -2,7 +2,6 @@ import asyncio
 import time
 
 from pathlib import Path
-from dataclasses import dataclass
 
 import panel
 import ezmsg.core as ez
@@ -13,14 +12,10 @@ from ezmsg.util.messagelogger import MessageLogger
 
 from typing import AsyncGenerator, Any, List, Tuple, Optional
 
-@dataclass(frozen = True)
-class RecorderSettingsMessage:
+class RecorderSettings(ez.Settings):
     data_dir: Path
     name: str = 'Message Recorder'
     msg_rate_window = 2.0 # sec
-
-class RecorderSettings(ez.Settings, RecorderSettingsMessage):
-    ...
 
 class RecorderGUIState(ez.State):
 

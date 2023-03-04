@@ -1,5 +1,5 @@
 import asyncio
-from dataclasses import dataclass, field, replace
+from dataclasses import field, replace
 
 import panel
 import ezmsg.core as ez
@@ -10,35 +10,30 @@ from typing import AsyncGenerator, Optional, List
 
 from ezmsg.sigproc.spectral import (
     Spectrum, 
-    SpectrumSettingsMessage,
+    SpectrumSettings,
     SpectralTransform,
     SpectralOutput,
     WindowFunction
 )
 
-from ezmsg.sigproc.window import Window, WindowSettingsMessage
+from ezmsg.sigproc.window import Window, WindowSettings
 
 from param.parameterized import Event
 
 from .lineplot import LinePlot, LinePlotSettings
 from .util import AxisScale
 
-@dataclass(frozen = True)
-class SpectrumControlSettingsMessage:
-    spectrum_settings: SpectrumSettingsMessage = field(
-        default_factory = SpectrumSettingsMessage
+class SpectrumControlSettings(ez.Settings):
+    spectrum_settings: SpectrumSettings = field(
+        default_factory = SpectrumSettings
     )
-
-    window_settings: WindowSettingsMessage = field(
-        default_factory = WindowSettingsMessage
+    window_settings: WindowSettings= field(
+        default_factory = WindowSettings
     )
-
-class SpectrumControlSettings(ez.Settings, SpectrumControlSettingsMessage):
-    ...
 
 class SpectrumControlState(ez.State):
-    spectrum_queue: "asyncio.Queue[SpectrumSettingsMessage]"
-    window_queue: "asyncio.Queue[WindowSettingsMessage]"
+    spectrum_queue: "asyncio.Queue[SpectrumSettings]"
+    window_queue: "asyncio.Queue[WindowSettings]"
 
     # Controls for Spectrum
     window: panel.widgets.Select
@@ -53,8 +48,8 @@ class SpectrumControl(ez.Unit):
     SETTINGS: SpectrumControlSettings
     STATE: SpectrumControlState
 
-    OUTPUT_SPECTRUM_SETTINGS = ez.OutputStream(SpectrumSettingsMessage)
-    OUTPUT_WINDOW_SETTINGS = ez.OutputStream(WindowSettingsMessage)
+    OUTPUT_SPECTRUM_SETTINGS = ez.OutputStream(SpectrumSettings)
+    OUTPUT_WINDOW_SETTINGS = ez.OutputStream(WindowSettings)
 
     def initialize(self) -> None:
         self.STATE.spectrum_queue = asyncio.Queue()
@@ -140,18 +135,13 @@ class SpectrumControl(ez.Unit):
         ]
 
 
-@dataclass(frozen = True)
-class SpectrumPlotSettingsMessage:
+class SpectrumPlotSettings(ez.Settings):
     name: str = 'Spectral Plot'
     time_axis: Optional[str] = None # If none, use dim 0
     freq_axis: Optional[str] = 'freq' # If none; use same dim name for freq output
     freq_axis_scale: AxisScale = AxisScale.LOG
     window_dur: float = 1.0 # sec
     window_shift: float = 0.5 # sec
-
-
-class SpectrumPlotSettings(ez.Settings, SpectrumPlotSettingsMessage):
-    ...
 
 
 class SpectrumPlot( ez.Collection ):
@@ -173,14 +163,14 @@ class SpectrumPlot( ez.Collection ):
             ) 
         )
 
-        spectrum_settings = SpectrumSettingsMessage(
+        spectrum_settings = SpectrumSettings(
             axis = self.SETTINGS.time_axis,
             out_axis = self.SETTINGS.freq_axis
         )
 
         self.SPECTRUM.apply_settings(spectrum_settings)
 
-        window_settings = WindowSettingsMessage(
+        window_settings = WindowSettings(
             axis = self.SETTINGS.time_axis,
             window_dur = self.SETTINGS.window_dur,
             window_shift = self.SETTINGS.window_shift

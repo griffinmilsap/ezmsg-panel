@@ -1,7 +1,6 @@
 import asyncio
 
 from functools import partial
-from dataclasses import dataclass
 
 import panel
 import ezmsg.core as ez
@@ -22,8 +21,7 @@ from typing import Dict, Optional, List
 
 CDS_X_DIM = '__x__'
 
-@dataclass(frozen = True)
-class LinePlotSettingsMessage:
+class LinePlotSettings(ez.Settings):
     name: str = 'LinePlot'
     x_axis: Optional[str] = None # If not specified, dim 0 is used.
     x_axis_scale: AxisScale = AxisScale.LINEAR
@@ -31,8 +29,6 @@ class LinePlotSettingsMessage:
     y_axis_label: Optional[str] = None
     x_axis_label: Optional[str] = None
 
-class LinePlotSettings(ez.Settings, LinePlotSettingsMessage):
-    ...
 
 class LinePlotState( ez.State ):
     x_data: npt.NDArray

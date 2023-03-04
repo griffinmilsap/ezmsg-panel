@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import field
 
 import panel
 import ezmsg.core as ez
@@ -12,14 +12,11 @@ if TYPE_CHECKING:
     TViewable = Union[Viewable, Viewer, BaseTemplate]
     TViewableOrFunc = Union[TViewable, Callable[[], TViewable]]
 
-@dataclass(frozen = True)
-class ApplicationSettingsMessage:
+class ApplicationSettings(ez.Settings):
     port: Optional[ int ] = None # None => disable server, 0 => choose open port
     name: str = 'ezmsg Panel'
     serve_kwargs: Dict[ str, Any ] = field( default_factory = dict )
 
-class ApplicationSettings( ez.Settings, ApplicationSettingsMessage ):
-    ...
 
 class Application( ez.Unit ):
     SETTINGS: ApplicationSettings

@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import field
 
 import ezmsg.core as ez
 
@@ -7,18 +7,14 @@ from ezmsg.panel.spectrum import SpectrumPlot, SpectrumPlotSettings
 from ezmsg.panel.timeseriesplot import TimeSeriesPlot, TimeSeriesPlotSettings
 from ezmsg.sigproc.synth import EEGSynth, EEGSynthSettings
 
-@dataclass(frozen = True)
-class EEGSpectrumSettingsMessage:
+
+class EEGSpectrumSettings(ez.Settings):
     eeg_settings: EEGSynthSettings = field(
         default_factory = EEGSynthSettings
     )
     app_settings: ApplicationSettings = field(
         default_factory = ApplicationSettings
     )
-
-
-class EEGSpectrumSettings(ez.Settings, EEGSpectrumSettingsMessage):
-    ...
 
 
 class EEGSpectrum(ez.Collection):

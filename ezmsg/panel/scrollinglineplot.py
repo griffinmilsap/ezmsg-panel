@@ -17,14 +17,9 @@ from typing import Dict, Set, Optional, List
 
 CDS_TIME_DIM = '__time__'
 
-@dataclass(frozen = True)
-class ScrollingLinePlotSettingsMessage:
+class ScrollingLinePlotSettings(ez.Settings):
     name: str = 'Scrolling Line Plot'
     time_axis: Optional[str] = None # If not specified, dim 0 is used.
-
-
-class ScrollingLinePlotSettings(ez.Settings, ScrollingLinePlotSettingsMessage):
-    ...
 
 
 class ScrollingLinePlotState(ez.State):

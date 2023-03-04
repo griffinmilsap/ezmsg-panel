@@ -5,12 +5,7 @@ import panel
 import ezmsg.core as ez
 
 from ezmsg.util.messages.axisarray import AxisArray
-
-from ezmsg.sigproc.butterworthfilter import (
-    ButterworthFilter, 
-    ButterworthFilterSettingsMessage,
-    ButterworthFilterSettings
-)
+from ezmsg.sigproc.butterworthfilter import ButterworthFilter, ButterworthFilterSettings
 
 from param.parameterized import Event
 
@@ -23,7 +18,7 @@ from .scrollinglineplot import (
 
 
 class ButterworthFilterControlState(ez.State):
-    queue: "asyncio.Queue[ButterworthFilterSettingsMessage]"
+    queue: "asyncio.Queue[ButterworthFilterSettings]"
 
     # Controls for Butterworth Filter
     order: panel.widgets.IntInput
@@ -35,7 +30,7 @@ class ButterworthFilterControl(ez.Unit):
     SETTINGS: ButterworthFilterSettings
     STATE: ButterworthFilterControlState
 
-    OUTPUT_SETTINGS = ez.OutputStream(ButterworthFilterSettingsMessage)
+    OUTPUT_SETTINGS = ez.OutputStream(ButterworthFilterSettings)
 
     def initialize(self) -> None:
         self.STATE.queue = asyncio.Queue()
