@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import field
 from pathlib import Path
 
 import ezmsg.core as ez
