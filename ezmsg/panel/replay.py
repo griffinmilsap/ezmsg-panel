@@ -9,7 +9,7 @@ import ezmsg.core as ez
 
 from param.parameterized import Event
 
-from ezmsg.util.messagereplay import MessageReplay, ReplayMessage, FileReplayMessage
+from ezmsg.util.messagereplay import MessageReplay, ReplayStatusMessage, FileReplayMessage
 
 class ReplaySettings(ez.Settings):
     data_dir: Path
@@ -20,6 +20,7 @@ class ReplayGUIState(ez.State):
 
     # Diagnostic Widgets
     message_rate: panel.widgets.Number
+    
 
     # Playback Controls
     file_selector: panel.widgets.FileSelector
@@ -31,24 +32,20 @@ class ReplayGUIState(ez.State):
 
     rapid: panel.widgets.Checkbox
     rate: panel.widgets.FloatInput
-    
 
     # Support
     file_queue: 'asyncio.Queue[Path]'
     stop_queue: 'asyncio.Queue[bool]'
     pause_queue: 'asyncio.Queue[bool]'
     msg_times: typing.List[float]
-    playback_pct: float = 0.0
+    replay_status: typing.Optional[ReplayStatusMessage] = None
 
 class ReplayGUI( ez.Unit ):
 
     SETTINGS: ReplaySettings
     STATE: ReplayGUIState
 
-    INPUT_REPLAY_START = ez.InputStream(ReplayMessage)
-    INPUT_REPLAY_MESSAGE = ez.InputStream(ReplayMessage)
-    INPUT_REPLAY_COMPLETE = ez.InputStream(ReplayMessage)
-
+    INPUT_REPLAY_STATUS = ez.InputStream(ReplayStatusMessage)
     OUTPUT_FILE_REPLAY = ez.OutputStream(FileReplayMessage)
 
     OUTPUT_STOP = ez.OutputStream(bool)
@@ -105,7 +102,7 @@ class ReplayGUI( ez.Unit ):
         self.STATE.playback = panel.indicators.Progress(
             value = 100, 
             max = 100, 
-            bar_color = 'primary', 
+            bar_color = 'success', 
             sizing_mode = 'stretch_width'
         )
 
@@ -155,20 +152,11 @@ class ReplayGUI( ez.Unit ):
             val = await self.STATE.pause_queue.get()
             yield self.OUTPUT_PAUSE, val
             
-    @ez.subscriber(INPUT_REPLAY_START)
-    async def on_replay_start(self, msg: ReplayMessage) -> None:
-        self.STATE.playback_pct = 0.0
-        self.STATE.playback_file.value = str(msg.filename.name)
-
-    @ez.subscriber(INPUT_REPLAY_COMPLETE)
-    async def on_replay_complete(self, msg: ReplayMessage) -> None:
-        ...
-
-    @ez.subscriber(INPUT_REPLAY_MESSAGE)
-    async def on_replay_message(self, msg: ReplayMessage) -> None:
+    @ez.subscriber(INPUT_REPLAY_STATUS)
+    async def on_replay_status(self, msg: ReplayStatusMessage) -> None:
         now = time.time()
         self.STATE.msg_times.append(now)
-        self.STATE.playback_pct = msg.idx / msg.total
+        self.STATE.replay_status = msg
 
     @ez.task
     async def update_display(self) -> None:
@@ -181,17 +169,19 @@ class ReplayGUI( ez.Unit ):
                 if (cur_time - t) < t_window
             ]
             self.STATE.message_rate.value = len(self.STATE.msg_times) / t_window
-            playback_value = int(100 * self.STATE.playback_pct)
-            self.STATE.playback.value = playback_value
+
+            if self.STATE.replay_status is not None:
+                playback_pct = self.STATE.replay_status.idx / self.STATE.replay_status.total
+                self.STATE.playback_file.value = str(self.STATE.replay_status.filename.name)
+                self.STATE.playback.value = int(100 * playback_pct)
+                self.STATE.playback.bar_color = 'success' if self.STATE.replay_status.done else 'primary'
 
 
 class Replay(ez.Collection):
     SETTINGS: ReplaySettings
 
     OUTPUT_MESSAGE = ez.InputStream(typing.Any)
-    OUTPUT_REPLAY_START = ez.OutputStream(ReplayMessage)
-    OUTPUT_REPLAY_MESSAGE = ez.OutputStream(ReplayMessage)
-    OUTPUT_REPLAY_COMPLETE = ez.OutputStream(ReplayMessage)
+    OUTPUT_REPLAY_STATUS = ez.OutputStream(ReplayStatusMessage)
 
     GUI = ReplayGUI()
     REPLAY = MessageReplay()
@@ -202,17 +192,12 @@ class Replay(ez.Collection):
     def network(self) -> ez.NetworkDefinition:
         return (
             (self.REPLAY.OUTPUT_MESSAGE, self.OUTPUT_MESSAGE),
-            
-            (self.REPLAY.OUTPUT_REPLAY_START, self.OUTPUT_REPLAY_START),
-            (self.REPLAY.OUTPUT_REPLAY_MESSAGE, self.OUTPUT_REPLAY_MESSAGE),
-            (self.REPLAY.OUTPUT_REPLAY_COMPLETE, self.OUTPUT_REPLAY_COMPLETE),
+            (self.REPLAY.OUTPUT_REPLAY_STATUS, self.OUTPUT_REPLAY_STATUS),
 
             (self.GUI.OUTPUT_FILE_REPLAY, self.REPLAY.INPUT_FILE),
             (self.GUI.OUTPUT_STOP, self.REPLAY.INPUT_STOP),
             (self.GUI.OUTPUT_PAUSE, self.REPLAY.INPUT_PAUSED),
-            (self.REPLAY.OUTPUT_REPLAY_START, self.GUI.INPUT_REPLAY_START),
-            (self.REPLAY.OUTPUT_REPLAY_MESSAGE, self.GUI.INPUT_REPLAY_MESSAGE),
-            (self.REPLAY.OUTPUT_REPLAY_COMPLETE, self.GUI.INPUT_REPLAY_COMPLETE),
+            (self.REPLAY.OUTPUT_REPLAY_STATUS, self.GUI.INPUT_REPLAY_STATUS),
         )
     
     def process_components(self) -> typing.Tuple[ez.Component, ...]:
