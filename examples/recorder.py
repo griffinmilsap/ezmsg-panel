@@ -78,4 +78,4 @@ if __name__ == '__main__':
         )
     )
 
-    ez.run_system( system )
+    ez.run(RECORDER = system)
