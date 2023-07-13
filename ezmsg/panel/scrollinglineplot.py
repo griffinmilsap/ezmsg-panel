@@ -8,7 +8,7 @@ import numpy as np
 
 from ezmsg.util.messages.axisarray import AxisArray
 
-from bokeh.plotting import figure, Figure
+from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource
 from bokeh.models.renderers import GlyphRenderer
 from bokeh.server.contexts import BokehSessionContext
@@ -78,7 +78,7 @@ class ScrollingLinePlot( ez.Unit ):
 
         @panel.io.with_lock
         async def _update( 
-            fig: Figure,
+            fig: object,
             cds: ColumnDataSource, 
             queue: "asyncio.Queue[ Dict[ str, np.ndarray ] ]",
             lines: Dict[ str, GlyphRenderer ]

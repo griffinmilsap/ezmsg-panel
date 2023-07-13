@@ -9,7 +9,7 @@ import numpy.typing as npt
 
 from ezmsg.util.messages.axisarray import AxisArray
 
-from bokeh.plotting import figure, Figure
+from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource
 from bokeh.models.renderers import GlyphRenderer
 
@@ -97,7 +97,7 @@ class LinePlot( ez.Unit ):
 
         @panel.io.with_lock
         async def _update( 
-            fig: Figure,
+            fig: object,
             cds: ColumnDataSource, 
             lines: Dict[ str, GlyphRenderer ]
         ) -> None:

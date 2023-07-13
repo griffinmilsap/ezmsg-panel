@@ -27,8 +27,22 @@ class Application( ez.Unit ):
     async def serve( self ) -> None:
         if self.SETTINGS.port is not None:
             if hasattr( self, 'panels' ):
+
+                def create_app():
+                    template = panel.template.FastGridTemplate(
+                        title="EEG Demo",
+                        prevent_collision=True,
+                        save_layout=True,
+                        theme_toggle=False,
+                        theme='dark',
+                        row_height=320
+                    )
+                    for i, pane in enumerate(self.panels.values()):
+                        template.main[i*2:(i+1)*2,:] = pane()
+                    return template
+
                 panel.serve( 
-                    self.panels,
+                    create_app,
                     port = self.SETTINGS.port,
                     title = self.SETTINGS.name,
                     websocket_origin = '*',
