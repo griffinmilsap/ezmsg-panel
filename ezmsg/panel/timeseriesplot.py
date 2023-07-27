@@ -5,6 +5,7 @@ import panel
 import ezmsg.core as ez
 
 from ezmsg.util.messages.axisarray import AxisArray
+from ezmsg.util.messagequeue import MessageQueue, MessageQueueSettings
 from ezmsg.sigproc.butterworthfilter import ButterworthFilter, ButterworthFilterSettings
 
 from param.parameterized import Event
@@ -90,6 +91,7 @@ class TimeSeriesPlot(ez.Collection):
     INPUT_SIGNAL = ez.InputStream(AxisArray)
 
     BPFILT = ButterworthFilter()
+    QUEUE = MessageQueue(MessageQueueSettings(leaky = True))
     BPFILT_CONTROL = ButterworthFilterControl()
     PLOT = ScrollingLinePlot()
 
@@ -107,7 +109,8 @@ class TimeSeriesPlot(ez.Collection):
         return (
             (self.BPFILT_CONTROL.OUTPUT_SETTINGS, self.BPFILT.INPUT_FILTER),
             (self.INPUT_SIGNAL, self.BPFILT.INPUT_SIGNAL),
-            (self.BPFILT.OUTPUT_SIGNAL, self.PLOT.INPUT_SIGNAL),
+            (self.BPFILT.OUTPUT_SIGNAL, self.QUEUE.INPUT),
+            (self.QUEUE.OUTPUT, self.PLOT.INPUT_SIGNAL),
         )
 
     def panel(self) -> panel.viewable.Viewable:
