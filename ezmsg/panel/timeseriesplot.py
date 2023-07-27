@@ -91,7 +91,7 @@ class TimeSeriesPlot(ez.Collection):
     INPUT_SIGNAL = ez.InputStream(AxisArray)
 
     BPFILT = ButterworthFilter()
-    QUEUE = MessageQueue(MessageQueueSettings(leaky = True))
+    QUEUE = MessageQueue(MessageQueueSettings(maxsize = 10, leaky = True))
     BPFILT_CONTROL = ButterworthFilterControl()
     PLOT = ScrollingLinePlot()
 
