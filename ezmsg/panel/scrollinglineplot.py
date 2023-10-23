@@ -20,6 +20,7 @@ CDS_TIME_DIM = '__time__'
 class ScrollingLinePlotSettings(ez.Settings):
     name: str = 'Scrolling Line Plot'
     time_axis: Optional[str] = None # If not specified, dim 0 is used.
+    initial_gain: float = 1.0
 
 
 class ScrollingLinePlotState(ez.State):
@@ -47,7 +48,7 @@ class ScrollingLinePlot( ez.Unit ):
     def initialize( self ) -> None:
         self.STATE.queues = set()
         self.STATE.channelize = panel.widgets.Checkbox( name = 'Channelize', value = True )
-        self.STATE.gain = panel.widgets.FloatInput( name = 'Gain', value = 1.0 )
+        self.STATE.gain = panel.widgets.FloatInput( name = 'Gain', value = self.SETTINGS.initial_gain )
         self.STATE.duration = panel.widgets.FloatInput( name = 'Duration (sec)', value = 4.0, start = 0.0 )
 
         number_kwargs = dict( title_size = '12pt', font_size = '18pt' )
