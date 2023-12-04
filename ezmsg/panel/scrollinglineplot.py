@@ -1,6 +1,5 @@
 import asyncio
 from functools import partial
-from dataclasses import dataclass
 
 import panel
 import ezmsg.core as ez
@@ -24,7 +23,7 @@ class ScrollingLinePlotSettings(ez.Settings):
 
 
 class ScrollingLinePlotState(ez.State):
-    queues: Set[ "asyncio.Queue[AxisArray]" ]
+    queues: Set["asyncio.Queue[Dict[str, np.ndarray]]"]
     cur_t: float = 0.0
     cur_fs: float = 1.0
 
@@ -66,7 +65,7 @@ class ScrollingLinePlot( ez.Unit ):
         ]
 
     def plot( self ) -> panel.viewable.Viewable:
-        queue: "asyncio.Queue[ Dict[ str, np.ndarray ] ]" = asyncio.Queue()
+        queue: "asyncio.Queue[Dict[str, np.ndarray]]" = asyncio.Queue()
         cds = ColumnDataSource( { CDS_TIME_DIM: [ self.STATE.cur_t ] } )
         fig = figure( 
             sizing_mode = 'stretch_width', 
@@ -78,14 +77,14 @@ class ScrollingLinePlot( ez.Unit ):
         lines = {}
 
         @panel.io.with_lock
-        async def _update( 
+        def _update( 
             fig: figure,
             cds: ColumnDataSource, 
             queue: "asyncio.Queue[ Dict[ str, np.ndarray ] ]",
             lines: Dict[ str, GlyphRenderer ]
         ) -> None:
             while not queue.empty():
-                cds_data: Dict[ str, np.ndarray ] = await queue.get()
+                cds_data: Dict[ str, np.ndarray ] = queue.get_nowait()
 
                 ch_names = [ ch for ch in cds_data.keys() if ch != CDS_TIME_DIM ]
                 offsets = np.arange( len( ch_names ) ) if self.STATE.channelize.value else np.zeros( len( ch_names ) )

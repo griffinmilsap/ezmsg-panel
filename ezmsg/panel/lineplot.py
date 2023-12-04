@@ -96,7 +96,7 @@ class LinePlot( ez.Unit ):
         lines = dict()
 
         @panel.io.with_lock
-        async def _update( 
+        def _update( 
             fig: figure,
             cds: ColumnDataSource, 
             lines: Dict[ str, GlyphRenderer ]
