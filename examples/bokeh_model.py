@@ -12,7 +12,14 @@ from panel.io.callbacks import PeriodicCallback
 from ezmsg.panel.application import Application, ApplicationSettings
 from ezmsg.testing.lfo import LFO, LFOSettings
 
+# Dealing with widgets in panel is easy and straight-forward!
+# Unfortunately, streaming data to/updating Bokeh figures is NOT.
+# Bokeh figures need to be created/updated per-session, which 
+# causes some unfortunate headaches. This example is here to 
+# demonstrate a scalable pattern for live Bokeh plots in ezmsg/panel  
+
 class BokehFigure:
+    """ This is an example live Bokeh figure."""
 
     fig: Model
     cds: Model
@@ -26,6 +33,8 @@ class BokehFigure:
         self.cds = ColumnDataSource(data = {'x': [], 'y': []})
         self.fig.line(x = 'x', y = 'y', source = self.cds)
 
+        # Every Bokeh figure requires an internal callback/update loop 
+        # to manipulate the model while the page is in a "locked" state.
         self.cb = pn.state.add_periodic_callback(self.update, period = update_period_ms)
         self.new_data = []
         self.rollover = rollover
@@ -65,6 +74,8 @@ class BokehExample(ez.Unit):
 
     @ez.subscriber(INPUT)
     async def on_number(self, num: float) -> None:
+        """ Called every time there's a new data point for our figure """
+        # Here, we manually update every client with new data
         ez.logger.info(f'Updating {len(self.STATE.figures)} figures')
         for figure in self.STATE.figures:
             figure.add_point(self.STATE.cur_x, num)
@@ -76,7 +87,6 @@ class BokehExample(ez.Unit):
         # We have to create Bokeh models per-client and keep track of them individually
         # This is the only way we can update/stream content to/from these models
         fig = BokehFigure(self.SETTINGS.rollover)
-        # fig = self.STATE.fig
 
         # We only want to service this figure as long as this session is active
         # So we ask panel to keep remove this figure from the STATE once session is destroyed
