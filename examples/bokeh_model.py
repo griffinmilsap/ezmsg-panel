@@ -6,8 +6,6 @@ import panel as pn
 from bokeh.plotting import figure
 from bokeh.model import Model
 from bokeh.models import ColumnDataSource
-from bokeh.server.contexts import BokehSessionContext
-from panel.io.callbacks import PeriodicCallback
 
 from ezmsg.panel.application import Application, ApplicationSettings
 from ezmsg.testing.lfo import LFO, LFOSettings
@@ -18,24 +16,17 @@ from ezmsg.testing.lfo import LFO, LFOSettings
 # causes some unfortunate headaches. This example is here to 
 # demonstrate a scalable pattern for live Bokeh plots in ezmsg/panel  
 
-class BokehFigure:
-    """ This is an example live Bokeh figure."""
-
+class SimpleFigure:
     fig: Model
     cds: Model
-    cb: PeriodicCallback
-
     new_data: typing.List[typing.Tuple[float, float]]
     rollover: int
 
-    def __init__(self, rollover: int, update_period_ms: int = 50) -> None:
+    def __init__(self, rollover: int) -> None:
         self.fig = figure()
         self.cds = ColumnDataSource(data = {'x': [], 'y': []})
         self.fig.line(x = 'x', y = 'y', source = self.cds)
-
-        # Every Bokeh figure requires an internal callback/update loop 
-        # to manipulate the model while the page is in a "locked" state.
-        self.cb = pn.state.add_periodic_callback(self.update, period = update_period_ms)
+    
         self.new_data = []
         self.rollover = rollover
 
@@ -43,17 +34,14 @@ class BokehFigure:
         self.new_data.append((x, y))
 
     # NOTE: async callbacks broken in recent panel/param
+    # https://github.com/holoviz/panel/issues/5986
+    # Once this is fixed; this should be updated to be async
     @pn.io.with_lock
     def update(self):
-        ez.logger.info(f'{self.cb=}')
         if len(self.new_data):
             x, y = zip(*self.new_data)
             self.cds.stream({'x': x, 'y': y}, rollover = self.rollover)
         self.new_data.clear()
-
-    @property
-    def figure(self) -> Model:
-        return self.fig
 
 
 class BokehExampleSettings(ez.Settings):
@@ -61,7 +49,7 @@ class BokehExampleSettings(ez.Settings):
 
 class BokehExampleState(ez.State):
     cur_x: float = 0.0
-    figures: typing.Set[BokehFigure] 
+    figures: typing.Set[SimpleFigure] 
 
 class BokehExample(ez.Unit):
     SETTINGS: BokehExampleSettings
@@ -75,8 +63,9 @@ class BokehExample(ez.Unit):
     @ez.subscriber(INPUT)
     async def on_number(self, num: float) -> None:
         """ Called every time there's a new data point for our figure """
+
         # Here, we manually update every client with new data
-        ez.logger.info(f'Updating {len(self.STATE.figures)} figures')
+        ez.logger.debug(f'Updating {len(self.STATE.figures)} figures')
         for figure in self.STATE.figures:
             figure.add_point(self.STATE.cur_x, num)
         self.STATE.cur_x += 1.0
@@ -86,20 +75,14 @@ class BokehExample(ez.Unit):
 
         # We have to create Bokeh models per-client and keep track of them individually
         # This is the only way we can update/stream content to/from these models
-        fig = BokehFigure(self.SETTINGS.rollover)
-
-        # We only want to service this figure as long as this session is active
-        # So we ask panel to keep remove this figure from the STATE once session is destroyed
-        # This won't happen immediately once the client disconnects; there's a ~50 second timeout
-        # that keeps the session alive.
-        def remove_queue(_: BokehSessionContext) -> None:
-            self.STATE.figures.remove(fig)
-        self.STATE.figures.add(fig)
-        pn.state.on_session_destroyed(remove_queue)
+        plot = SimpleFigure(self.SETTINGS.rollover)
+        pn.state.add_periodic_callback(plot.update, period = 100) # ms
+        self.STATE.figures.add(plot)
+        pn.state.on_session_destroyed(lambda _: self.STATE.figures.remove(plot))
 
         return pn.Column(
             "# Bokeh Example",
-            fig.figure,
+            plot.fig,
         )
 
 if __name__ == '__main__':
