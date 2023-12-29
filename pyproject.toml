@@ -1,6 +1,21 @@
-[build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
+[tool.poetry]
+name = "ezmsg-panel"
+version = "0.3.0"
+description = "Panel patterns for ezmsg systems"
+authors = ["Griffin Milsap <griffin.milsap@jhuapl.edu>"]
+readme = "README.md"
+homepage = "https://github.com/griffinmilsap/ezmsg-panel"
+packages = [
+  { include = "ezmsg", from = "src" }
 ]
-build-backend = "setuptools.build_meta"
+
+
+[tool.poetry.dependencies]
+python = "^3.8"
+ezmsg = "^3.3.3"
+panel = "^1.3.6"
+
+
+[build-system] 
+requires = ["poetry-core"] 
+build-backend = "poetry.core.masonry.api"
