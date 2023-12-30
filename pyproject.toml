@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ezmsg-panel"
-version = "0.3.0"
+version = "0.3.1"
 description = "Panel patterns for ezmsg systems"
 authors = ["Griffin Milsap <griffin.milsap@jhuapl.edu>"]
 readme = "README.md"
