@@ -64,7 +64,7 @@ class TabbedApp(abc.ABC):
         template = pn.template.FastListTemplate(
             title = self.title, 
             sidebar = [tab_buttons, pn.layout.Divider(), sidebar],
-            main = [main]
+            main = [main],
         ) 
 
         return template

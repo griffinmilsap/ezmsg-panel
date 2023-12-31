@@ -14,6 +14,8 @@ from bokeh.server.contexts import BokehSessionContext
 
 from typing import Dict, Set, Optional, List
 
+from .tabbedapp import Tab
+
 CDS_TIME_DIM = '__time__'
 
 class ScrollingLinePlotSettings(ez.Settings):
@@ -37,7 +39,7 @@ class ScrollingLinePlotState(ez.State):
     n_time: panel.widgets.Number
 
 
-class ScrollingLinePlot( ez.Unit ):
+class ScrollingLinePlot(ez.Unit, Tab):
 
     SETTINGS: ScrollingLinePlotSettings
     STATE: ScrollingLinePlotState
@@ -53,6 +55,7 @@ class ScrollingLinePlot( ez.Unit ):
         number_kwargs = dict( title_size = '12pt', font_size = '18pt' )
         self.STATE.fs = panel.widgets.Number( name = 'Sampling Rate', format='{value} Hz', **number_kwargs )
         self.STATE.n_time = panel.widgets.Number( name = "Samples per Message", **number_kwargs )
+
 
     @property
     def controls(self) -> List[panel.viewable.Viewable]:
@@ -119,19 +122,32 @@ class ScrollingLinePlot( ez.Unit ):
         panel.state.on_session_destroyed(remove_queue)
 
         return panel.pane.Bokeh(fig)
+    
+    @property
+    def name(self) -> str:
+        return self.SETTINGS.name
+    
+    def content(self) -> panel.viewable.Viewable:
+        return panel.Card(
+            self.plot(),
+            sizing_mode = 'stretch_both'
+        )
+
+    def sidebar(self) -> panel.viewable.Viewable:
+        return panel.Column( 
+            self.STATE.fs,
+            self.STATE.n_time,
+            "__Scrolling Line Plot Controls__",
+            self.STATE.channelize,
+            self.STATE.gain,
+            self.STATE.duration,
+        )
 
 
     def panel(self) -> panel.viewable.Viewable:
         return panel.Row( 
             self.plot(),
-            panel.Column( 
-                self.STATE.fs,
-                self.STATE.n_time,
-                "__Scrolling Line Plot Controls__",
-                self.STATE.channelize,
-                self.STATE.gain,
-                self.STATE.duration,
-            )
+            self.sidebar()
         )
     
     @ez.subscriber( INPUT_SIGNAL )

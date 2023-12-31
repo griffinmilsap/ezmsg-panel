@@ -12,6 +12,8 @@ from param.parameterized import Event
 
 from typing import AsyncGenerator, List
 
+from .tabbedapp import Tab
+
 from .scrollinglineplot import (
     ScrollingLinePlot, 
     ScrollingLinePlotSettings, 
@@ -85,7 +87,7 @@ class ButterworthFilterControl(ez.Unit):
 
 TimeSeriesPlotSettings = ScrollingLinePlotSettings
 
-class TimeSeriesPlot(ez.Collection):
+class TimeSeriesPlot(ez.Collection, Tab):
     SETTINGS: TimeSeriesPlotSettings
 
     INPUT_SIGNAL = ez.InputStream(AxisArray)
@@ -94,6 +96,21 @@ class TimeSeriesPlot(ez.Collection):
     QUEUE = MessageQueue(MessageQueueSettings(maxsize = 10, leaky = True))
     BPFILT_CONTROL = ButterworthFilterControl()
     PLOT = ScrollingLinePlot()
+
+    @property
+    def name(self) -> str:
+        return self.SETTINGS.name
+    
+    def content(self) -> panel.viewable.Viewable:
+        return self.PLOT.content()
+    
+    def sidebar(self) -> panel.viewable.Viewable:
+        return panel.Column(
+            "__Scrolling Line Plot Controls__",
+            self.PLOT.sidebar(),
+            "__Visualization Filter Controls__",
+            *self.BPFILT_CONTROL.controls
+        )
 
     def configure(self) -> None:
         self.PLOT.apply_settings(self.SETTINGS)
@@ -115,11 +132,6 @@ class TimeSeriesPlot(ez.Collection):
 
     def panel(self) -> panel.viewable.Viewable:
         return panel.Row(
-            self.PLOT.plot(),
-            panel.Column(
-                "__Scrolling Line Plot Controls__",
-                *self.PLOT.controls,
-                "__Visualization Filter Controls__",
-                *self.BPFILT_CONTROL.controls
-            )
+            self.content(),
+            self.sidebar()
         )
