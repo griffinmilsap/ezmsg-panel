@@ -76,13 +76,15 @@ class ButterworthFilterControl(ez.Unit):
             settings = await self.STATE.queue.get()
             yield self.OUTPUT_SETTINGS, settings
 
-    @property
-    def controls(self) -> List[panel.viewable.Viewable]:
-        return [
+    def controls(self) -> panel.viewable.Viewable:
+        return panel.Card(
             self.STATE.order,
             self.STATE.cuton,
             self.STATE.cutoff,
-        ]
+            title = 'Butterworth Filter Controls',
+            collapsed = True,
+            sizing_mode = 'stretch_width'
+        )
 
 
 TimeSeriesPlotSettings = ScrollingLinePlotSettings
@@ -98,7 +100,7 @@ class TimeSeriesPlot(ez.Collection, Tab):
     PLOT = ScrollingLinePlot()
 
     @property
-    def name(self) -> str:
+    def tab_name(self) -> str:
         return self.SETTINGS.name
     
     def content(self) -> panel.viewable.Viewable:
@@ -106,10 +108,8 @@ class TimeSeriesPlot(ez.Collection, Tab):
     
     def sidebar(self) -> panel.viewable.Viewable:
         return panel.Column(
-            "__Scrolling Line Plot Controls__",
             self.PLOT.sidebar(),
-            "__Visualization Filter Controls__",
-            *self.BPFILT_CONTROL.controls
+            self.BPFILT_CONTROL.controls()
         )
 
     def configure(self) -> None:

@@ -56,17 +56,6 @@ class ScrollingLinePlot(ez.Unit, Tab):
         self.STATE.fs = panel.widgets.Number( name = 'Sampling Rate', format='{value} Hz', **number_kwargs )
         self.STATE.n_time = panel.widgets.Number( name = "Samples per Message", **number_kwargs )
 
-
-    @property
-    def controls(self) -> List[panel.viewable.Viewable]:
-        return [
-            self.STATE.fs,
-            self.STATE.n_time,
-            self.STATE.channelize,
-            self.STATE.gain,
-            self.STATE.duration
-        ]
-
     def plot( self ) -> panel.viewable.Viewable:
         queue: "asyncio.Queue[Dict[str, np.ndarray]]" = asyncio.Queue()
         cds = ColumnDataSource( { CDS_TIME_DIM: [ self.STATE.cur_t ] } )
@@ -124,23 +113,26 @@ class ScrollingLinePlot(ez.Unit, Tab):
         return panel.pane.Bokeh(fig)
     
     @property
-    def name(self) -> str:
+    def tab_name(self) -> str:
         return self.SETTINGS.name
     
     def content(self) -> panel.viewable.Viewable:
         return panel.Card(
             self.plot(),
-            sizing_mode = 'stretch_both'
+            hide_header = True,
+            sizing_mode = 'stretch_both',
         )
 
     def sidebar(self) -> panel.viewable.Viewable:
-        return panel.Column( 
+        return panel.Card( 
             self.STATE.fs,
             self.STATE.n_time,
-            "__Scrolling Line Plot Controls__",
             self.STATE.channelize,
             self.STATE.gain,
             self.STATE.duration,
+            title = 'Scrolling Line Plot Controls',
+            collapsed = True,
+            sizing_mode = 'stretch_width'
         )
 
 

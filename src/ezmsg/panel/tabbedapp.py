@@ -6,7 +6,7 @@ import panel as pn
 class Tab(abc.ABC):
 
     @abc.abstractproperty
-    def name(self) -> str:
+    def tab_name(self) -> str:
         raise NotImplementedError
     
     @abc.abstractmethod
@@ -18,19 +18,19 @@ class Tab(abc.ABC):
         raise NotImplementedError
     
 
-class TabbedApp(abc.ABC):
+class TabbedApp:
 
-    @abc.abstractproperty
+    @property
     def title(self) -> str:
         return ''
 
-    @abc.abstractproperty
+    @property
     def tabs(self) -> typing.List[Tab]:
         return []
     
     @property
     def tab_names(self) -> typing.List[str]:
-        return [t.name for t in self.tabs]
+        return [t.tab_name for t in self.tabs]
 
     def app(self) -> pn.template.FastListTemplate:
         
