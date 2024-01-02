@@ -42,28 +42,37 @@ class TabbedApp:
             sizing_mode = 'stretch_both'
         )
 
-        tab_buttons = pn.widgets.RadioButtonGroup(
-            name = 'Tab Select',
-            options = self.tab_names,
-            button_style = 'outline',
-            sizing_mode = 'stretch_width',
-            orientation = 'vertical',
-        )
+        template_sidebar = [sidebar]
 
-        @pn.depends(tab_buttons, watch = True)
-        def tab_changed(tab: str) -> None:
+        def populate(tab: str) -> None:
             tab_idx = self.tab_names.index(tab)
             sidebar.clear()
             sidebar.append(self.tabs[tab_idx].sidebar())
             main.clear()
             main.append(self.tabs[tab_idx].content())
 
+        if len(self.tabs) > 1:
+
+            tab_buttons = pn.widgets.RadioButtonGroup(
+                name = 'Tab Select',
+                options = self.tab_names,
+                button_style = 'outline',
+                sizing_mode = 'stretch_width',
+                orientation = 'vertical',
+            )
+
+            @pn.depends(tab_buttons, watch = True)
+            def tab_changed(tab: str) -> None:
+                populate(tab)
+
+            template_sidebar = [tab_buttons, pn.layout.Divider()] + template_sidebar
+        
         if len(self.tab_names):
-            tab_changed(self.tab_names[0])
+            populate(self.tab_names[0])
 
         template = pn.template.FastListTemplate(
             title = self.title, 
-            sidebar = [tab_buttons, pn.layout.Divider(), sidebar],
+            sidebar = template_sidebar,
             main = [main],
         ) 
 
