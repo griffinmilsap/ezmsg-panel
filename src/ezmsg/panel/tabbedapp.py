@@ -1,21 +1,25 @@
-import abc
 import typing
 
+import ezmsg.core as ez
 import panel as pn
 
-class Tab(abc.ABC):
+class Tab:
 
-    @abc.abstractproperty
+    @property
     def tab_name(self) -> str:
-        raise NotImplementedError
+        return 'Tab'
     
-    @abc.abstractmethod
+    @property
     def sidebar(self) -> pn.viewable.Viewable:
-        raise NotImplementedError
+        return pn.Card(
+            title = f'# {self.tab_name} Sidebar',
+        )
     
-    @abc.abstractmethod
     def content(self) -> pn.viewable.Viewable:
-        raise NotImplementedError
+        return pn.Card(
+            title = f'# {self.tab_name} Content',
+            sizing_mode = 'expand_both'
+        )
     
 
 class TabbedApp:
