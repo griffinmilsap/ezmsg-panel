@@ -100,7 +100,7 @@ class TimeSeriesPlot(ez.Collection, Tab):
     PLOT = ScrollingLinePlot()
 
     @property
-    def tab_name(self) -> str:
+    def title(self) -> str:
         return self.SETTINGS.name
     
     def content(self) -> panel.viewable.Viewable:

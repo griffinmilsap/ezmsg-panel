@@ -113,7 +113,7 @@ class ScrollingLinePlot(ez.Unit, Tab):
         return panel.pane.Bokeh(fig)
     
     @property
-    def tab_name(self) -> str:
+    def title(self) -> str:
         return self.SETTINGS.name
     
     def content(self) -> panel.viewable.Viewable:
