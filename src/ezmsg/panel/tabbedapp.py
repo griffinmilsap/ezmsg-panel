@@ -9,7 +9,6 @@ class Tab:
     def title(self) -> str:
         return 'Tab'
     
-    @property
     def sidebar(self) -> pn.viewable.Viewable:
         return pn.Card(
             title = f'# {self.title} Sidebar',
@@ -18,7 +17,7 @@ class Tab:
     def content(self) -> pn.viewable.Viewable:
         return pn.Card(
             title = f'# {self.title} Content',
-            sizing_mode = 'expand_both'
+            sizing_mode = 'stretch_both'
         )
 
     def app(self) -> pn.template.FastListTemplate:
