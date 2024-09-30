@@ -42,8 +42,8 @@ class ReplayGUIState(ez.State):
 
 class ReplayGUI( ez.Unit ):
 
-    SETTINGS: ReplaySettings
-    STATE: ReplayGUIState
+    SETTINGS = ReplaySettings
+    STATE = ReplayGUIState
 
     INPUT_REPLAY_STATUS = ez.InputStream(ReplayStatusMessage)
     OUTPUT_FILE_REPLAY = ez.OutputStream(FileReplayMessage)
@@ -178,7 +178,7 @@ class ReplayGUI( ez.Unit ):
 
 
 class Replay(ez.Collection):
-    SETTINGS: ReplaySettings
+    SETTINGS = ReplaySettings
 
     OUTPUT_MESSAGE = ez.InputStream(typing.Any)
     OUTPUT_REPLAY_STATUS = ez.OutputStream(ReplayStatusMessage)

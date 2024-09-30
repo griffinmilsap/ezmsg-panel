@@ -52,8 +52,8 @@ class BokehExampleState(ez.State):
     figures: typing.Set[SimpleFigure] 
 
 class BokehExample(ez.Unit):
-    SETTINGS: BokehExampleSettings
-    STATE: BokehExampleState
+    SETTINGS = BokehExampleSettings
+    STATE = BokehExampleState
 
     INPUT = ez.InputStream(float)
 

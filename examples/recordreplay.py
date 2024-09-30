@@ -20,7 +20,7 @@ class RecordReplaySystemSettings(ez.Settings):
 
 class RecordReplaySystem(ez.Collection):
 
-    SETTINGS: RecordReplaySystemSettings
+    SETTINGS = RecordReplaySystemSettings
 
     SYNTH = PinkNoise()
     RECORDER = Recorder()

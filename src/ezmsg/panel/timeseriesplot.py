@@ -30,8 +30,8 @@ class ButterworthFilterControlState(ez.State):
 
 
 class ButterworthFilterControl(ez.Unit):
-    SETTINGS: ButterworthFilterSettings
-    STATE: ButterworthFilterControlState
+    SETTINGS = ButterworthFilterSettings
+    STATE = ButterworthFilterControlState
 
     OUTPUT_SETTINGS = ez.OutputStream(ButterworthFilterSettings)
 
@@ -90,7 +90,7 @@ class ButterworthFilterControl(ez.Unit):
 TimeSeriesPlotSettings = ScrollingLinePlotSettings
 
 class TimeSeriesPlot(ez.Collection, Tab):
-    SETTINGS: TimeSeriesPlotSettings
+    SETTINGS = TimeSeriesPlotSettings
 
     INPUT_SIGNAL = ez.InputStream(AxisArray)
 

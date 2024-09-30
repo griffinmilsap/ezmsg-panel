@@ -45,8 +45,8 @@ class SpectrumControlState(ez.State):
     window_shift: panel.widgets.FloatInput
 
 class SpectrumControl(ez.Unit):
-    SETTINGS: SpectrumControlSettings
-    STATE: SpectrumControlState
+    SETTINGS = SpectrumControlSettings
+    STATE = SpectrumControlState
 
     OUTPUT_SPECTRUM_SETTINGS = ez.OutputStream(SpectrumSettings)
     OUTPUT_WINDOW_SETTINGS = ez.OutputStream(WindowSettings)
@@ -145,7 +145,7 @@ class SpectrumPlotSettings(ez.Settings):
 
 
 class SpectrumPlot( ez.Collection ):
-    SETTINGS: SpectrumPlotSettings
+    SETTINGS = SpectrumPlotSettings
 
     INPUT_SIGNAL = ez.InputStream(AxisArray)
 

@@ -41,8 +41,8 @@ class ScrollingLinePlotState(ez.State):
 
 class ScrollingLinePlot(ez.Unit, Tab):
 
-    SETTINGS: ScrollingLinePlotSettings
-    STATE: ScrollingLinePlotState
+    SETTINGS = ScrollingLinePlotSettings
+    STATE = ScrollingLinePlotState
 
     INPUT_SIGNAL = ez.InputStream(AxisArray)
 

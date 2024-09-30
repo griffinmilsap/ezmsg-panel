@@ -40,8 +40,8 @@ class RecorderGUIState(ez.State):
 
 class RecorderGUI( ez.Unit ):
 
-    SETTINGS: RecorderSettings
-    STATE: RecorderGUIState
+    SETTINGS = RecorderSettings
+    STATE = RecorderGUIState
 
     INPUT_MESSAGE = ez.InputStream(Any)
 
@@ -172,7 +172,7 @@ class RecorderGUI( ez.Unit ):
 
 
 class Recorder(ez.Collection):
-    SETTINGS: RecorderSettings
+    SETTINGS = RecorderSettings
 
     INPUT_MESSAGE = ez.InputStream(Any)
 

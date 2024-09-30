@@ -44,8 +44,8 @@ class LinePlotState( ez.State ):
 
 class LinePlot( ez.Unit ):
 
-    SETTINGS: LinePlotSettings
-    STATE: LinePlotState
+    SETTINGS = LinePlotSettings
+    STATE = LinePlotState
 
     INPUT_SIGNAL = ez.InputStream(Optional[AxisArray])
 

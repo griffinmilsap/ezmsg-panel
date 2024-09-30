@@ -19,8 +19,8 @@ class NumberPanelState(ez.State):
 
 class NumberPanel(ez.Unit):
 
-    SETTINGS: NumberPanelSettings
-    STATE: NumberPanelState
+    SETTINGS = NumberPanelSettings
+    STATE = NumberPanelState
 
     OUTPUT_NUMBER = ez.OutputStream(float)
 
@@ -83,7 +83,7 @@ class OutputPanel(ez.Unit):
 
 class PanelExample(ez.Collection):
 
-    SETTINGS: ApplicationSettings
+    SETTINGS = ApplicationSettings
 
     APP = Application()
     NUMBER_OUTPUT = OutputPanel()

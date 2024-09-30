@@ -19,7 +19,7 @@ class ApplicationSettings(ez.Settings):
 
 
 class Application( ez.Unit ):
-    SETTINGS: ApplicationSettings
+    SETTINGS = ApplicationSettings
 
     panels: Mapping[ str, 'TViewableOrFunc' ]
 

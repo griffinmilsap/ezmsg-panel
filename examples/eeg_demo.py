@@ -18,7 +18,7 @@ class EEGSpectrumSettings(ez.Settings):
 
 
 class EEGSpectrum(ez.Collection):
-    SETTINGS: EEGSpectrumSettings
+    SETTINGS = EEGSpectrumSettings
 
     APP = Application()
     EEG = EEGSynth()
