@@ -63,7 +63,7 @@ class OutputPanelState(ez.State):
 
 class OutputPanel(ez.Unit):
 
-    STATE: OutputPanelState
+    STATE = OutputPanelState
 
     INPUT_NUMBER = ez.InputStream(float)
 
