@@ -1,21 +1,26 @@
-[tool.poetry]
+[project]
 name = "ezmsg-panel"
-version = "0.3.1"
+version = "0.4.0"
 description = "Panel patterns for ezmsg systems"
-authors = ["Griffin Milsap <griffin.milsap@jhuapl.edu>"]
+authors = [
+  { name = "Griffin Milsap", email = "griffin.milsap@gmail.com" }
+]
 readme = "README.md"
 homepage = "https://github.com/griffinmilsap/ezmsg-panel"
-packages = [
-  { include = "ezmsg", from = "src" }
+requires-python = ">=3.10"
+dependencies = [
+    "ezmsg>=3.5.0",
+    "panel>=1.5.3",
 ]
 
+[project.optional-dependencies]
+dependencies = [
+    "ezmsg-sigproc>=1.4.2",
+]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-ezmsg = "^3.3.3"
-panel = "^1.4.3"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-
-[build-system] 
-requires = ["poetry-core"] 
-build-backend = "poetry.core.masonry.api"
+[tool.hatch.build.targets.wheel]
+packages = ["src/ezmsg"]
