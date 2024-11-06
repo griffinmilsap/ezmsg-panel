@@ -8,6 +8,10 @@ from ezmsg.util.messages.axisarray import AxisArray
 
 from typing import AsyncGenerator, Optional, List
 
+from panel.viewable import Viewable
+
+from .tabbedapp import Tab
+
 from ezmsg.sigproc.spectral import (
     Spectrum, 
     SpectrumSettings,
@@ -144,7 +148,7 @@ class SpectrumPlotSettings(ez.Settings):
     window_shift: float = 0.5 # sec
 
 
-class SpectrumPlot( ez.Collection ):
+class SpectrumPlot( ez.Collection, Tab ):
     SETTINGS = SpectrumPlotSettings
 
     INPUT_SIGNAL = ez.InputStream(AxisArray)
@@ -184,6 +188,21 @@ class SpectrumPlot( ez.Collection ):
                 window_settings = window_settings       
             )
         )
+
+    @property
+    def title(self) -> str:
+        return self.SETTINGS.name
+
+    def content(self) -> panel.viewable.Viewable:
+        return self.PLOT.plot()
+    
+    def sidebar(self) -> panel.viewable.Viewable:
+        return panel.Column(
+                "__Line Plot Controls__",
+                *self.PLOT.controls,
+                '__Spectrum Settings__',
+                *self.SPECTRUM_CONTROL.controls
+            )
 
     def panel(self) -> panel.viewable.Viewable:
         return panel.Row(

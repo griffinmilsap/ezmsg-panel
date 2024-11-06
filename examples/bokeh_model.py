@@ -1,3 +1,5 @@
+import time
+import math
 import typing
 
 import ezmsg.core as ez
@@ -7,8 +9,8 @@ from bokeh.plotting import figure
 from bokeh.model import Model
 from bokeh.models import ColumnDataSource
 
+from ezmsg.util.rate import Rate
 from ezmsg.panel.application import Application, ApplicationSettings
-from ezmsg.testing.lfo import LFO, LFOSettings
 
 # Dealing with widgets in panel is easy and straight-forward!
 # Unfortunately, streaming data to/updating Bokeh figures is NOT.
@@ -33,11 +35,8 @@ class SimpleFigure:
     def add_point(self, x: float, y: float) -> None:
         self.new_data.append((x, y))
 
-    # NOTE: async callbacks broken in recent panel/param
-    # https://github.com/holoviz/panel/issues/5986
-    # Once this is fixed; this should be updated to be async
     @pn.io.with_lock
-    def update(self):
+    async def update(self):
         if len(self.new_data):
             x, y = zip(*self.new_data)
             self.cds.stream({'x': x, 'y': y}, rollover = self.rollover)
@@ -84,10 +83,27 @@ class BokehExample(ez.Unit):
             "# Bokeh Example",
             plot.fig,
         )
+    
+
+class NumberPublisherSettings(ez.Settings):
+    pub_rate: float = 2.0
+
+class NumberPublisher(ez.Unit):
+    SETTINGS = NumberPublisherSettings
+
+    OUTPUT_NUMBER = ez.OutputStream(float)
+
+    @ez.publisher(OUTPUT_NUMBER)
+    async def pub_number(self) -> typing.AsyncGenerator:
+        rate = Rate(self.SETTINGS.pub_rate)
+        while True:
+            await rate.sleep()
+            yield self.OUTPUT_NUMBER, math.sin(time.time())
+
 
 if __name__ == '__main__':
 
-    lfo = LFO(LFOSettings(freq = 0.2, update_rate = 2.0))
+    numbers = NumberPublisher()
     example = BokehExample()
 
     app = Application(
@@ -102,10 +118,10 @@ if __name__ == '__main__':
     }
 
     ez.run(
-        LFO = lfo,
+        NUMBERS = numbers,
         EXAMPLE = example,
         APP = app,
         connections = (
-            (lfo.OUTPUT, example.INPUT),
+            (numbers.OUTPUT_NUMBER, example.INPUT),
         )
     )

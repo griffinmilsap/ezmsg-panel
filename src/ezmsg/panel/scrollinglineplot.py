@@ -69,7 +69,7 @@ class ScrollingLinePlot(ez.Unit, Tab):
         lines = {}
 
         @panel.io.with_lock
-        def _update( 
+        async def _update( 
             fig: figure,
             cds: ColumnDataSource, 
             queue: "asyncio.Queue[ Dict[ str, np.ndarray ] ]",

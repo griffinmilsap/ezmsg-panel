@@ -1,3 +1,4 @@
+import typing
 from dataclasses import field
 
 import ezmsg.core as ez
@@ -45,14 +46,22 @@ class EEGSpectrum(ez.Collection):
         )
 
         self.APP.panels = {
-            'Timeseries': self.TIMESERIES_PLOT.panel,
-            'Spectra': self.SPECTRUM_PLOT.panel
+            'Timeseries': self.TIMESERIES_PLOT.app,
+            'Spectra': self.SPECTRUM_PLOT.app
         }
 
     def network(self) -> ez.NetworkDefinition:
         return (
             (self.EEG.OUTPUT_SIGNAL, self.SPECTRUM_PLOT.INPUT_SIGNAL),
             (self.EEG.OUTPUT_SIGNAL, self.TIMESERIES_PLOT.INPUT_SIGNAL)
+        )
+    
+    # IMPORTANT: ALL viewable panels must exist in SAME process 
+    # as the Application.  If you need to split out computation
+    # to another process, de-couple your UI/Panel unit from the compute unit.
+    def process_components(self) -> typing.Tuple[ez.Component, ...]:
+        return (
+            # self.TIMESERIES_PLOT, # Uncomment me and this panel doesn't work anymore!
         )
 
 if __name__ == '__main__':
@@ -123,4 +132,4 @@ if __name__ == '__main__':
         )
     )
 
-    ez.run(eeg_spectrum)
+    ez.run(SYSTEM = eeg_spectrum)
